@@ -1,0 +1,11 @@
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS retention_hold boolean NOT NULL DEFAULT false;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS retention_hold_reason text;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS content_revision integer NOT NULL DEFAULT 0;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS approval_purged_at timestamptz;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS approval_digest text;
+ALTER TABLE execution_events ADD COLUMN IF NOT EXISTS purged_at timestamptz;
+ALTER TABLE artifacts ADD COLUMN IF NOT EXISTS purged_at timestamptz;
+ALTER TABLE artifacts ADD COLUMN IF NOT EXISTS content_hash text;
+ALTER TABLE artifacts ADD COLUMN IF NOT EXISTS content_bytes integer;
+CREATE INDEX IF NOT EXISTS unpurged_owner_events ON execution_events(task_id,occurred_at) WHERE visibility='owner' AND purged_at IS NULL;
+CREATE INDEX IF NOT EXISTS unpurged_private_artifacts ON artifacts(task_id,created_at) WHERE NOT published AND purged_at IS NULL;

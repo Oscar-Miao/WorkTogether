@@ -1,0 +1,43 @@
+{
+  "name": "team-agent-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev/start.mjs",
+    "dev:api": "tsx watch apps/api/src/main.ts",
+    "dev:web": "vite --config apps/web/vite.config.ts",
+    "bridge": "tsx apps/bridge/src/main.ts",
+    "setup": "tsx scripts/dev/setup.ts",
+    "check": "tsc --noEmit",
+    "check:structure": "node scripts/checks/structure.mjs",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "build": "pnpm check && tsup --config tsup.config.ts && vite build --config apps/web/vite.config.ts",
+    "start": "node apps/api/dist/main.js",
+    "check:smoke": "node scripts/checks/build-smoke.mjs",
+    "reset:owner": "tsx scripts/dev/reset-owner.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/ws": "^8.18.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "jose": "6.2.12",
+    "prettier": "3.6.2",
+    "tsup": "9.0.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  }
+}

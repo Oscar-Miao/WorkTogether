@@ -1,0 +1,25 @@
+{
+  "providers": {
+    "enterprise": {
+      "baseUrl": "https://YOUR_MODEL_ENDPOINT/v1",
+      "api": "openai-completions",
+      "apiKey": "$PI_PROVIDER_API_KEY",
+      "models": [
+        {
+          "id": "YOUR_MODEL_ID",
+          "name": "Enterprise model",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 32000,
+          "maxTokens": 4096,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        }
+      ]
+    }
+  }
+}

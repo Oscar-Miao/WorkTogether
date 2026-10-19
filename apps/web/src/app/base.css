@@ -1,0 +1,271 @@
+:root {
+  font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  color: #344238;
+  background: #f9faf6;
+  font-synthesis: none;
+  --ink: #344238;
+  --muted: #65725b;
+  --line: #e3e7db;
+  --accent: #b66d47;
+  --green: #657e50;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  color: inherit;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+svg {
+  flex-shrink: 0;
+}
+a {
+  color: var(--accent);
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+h1 {
+  font-size: 27px;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: -0.04em;
+}
+h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid #dce3d1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #61734e;
+  background: #fff;
+  outline: none;
+}
+textarea {
+  resize: vertical;
+  line-height: 1.85;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #adb996;
+  box-shadow: 0 0 0 3px #8195650d;
+}
+input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: #9aac7b;
+}
+input[type='file'] {
+  display: none;
+}
+:focus-visible {
+  outline: 2px solid #9eaf7d;
+  outline-offset: 3px;
+}
+.muted,
+.subtle {
+  color: var(--muted);
+}
+.subtle {
+  font-size: 11px;
+}
+.eyebrow {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #99a187;
+  margin-bottom: 8px;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 37px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.button.primary {
+  background: var(--accent);
+  color: white;
+}
+.button.primary:hover:not(:disabled) {
+  background: #a45d37;
+}
+.button.secondary {
+  background: white;
+  border-color: #dfe5d5;
+  color: #7c8c67;
+}
+.button.ghost {
+  background: none;
+  color: #929e80;
+}
+.button.ghost:hover {
+  background: #e9eedd;
+}
+.button.danger {
+  background: #fbefe7;
+  border-color: #efd8c7;
+  color: #b17b56;
+}
+.button.full {
+  width: 100%;
+  margin-top: 12px;
+}
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: #9aa88a;
+  background: none;
+}
+.icon-button:hover {
+  background: #e6ecda;
+  color: #6b8154;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  line-height: 1.5;
+  border-radius: 5px;
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+.badge.green {
+  color: #6e8e53;
+  background: #edf3e6;
+}
+.badge.amber {
+  color: #ad8a44;
+  background: #f8f2e2;
+}
+.badge.blue {
+  color: #7893a1;
+  background: #edf2f4;
+}
+.badge.red {
+  color: #b77d5c;
+  background: #fbede3;
+}
+.badge.neutral {
+  color: #9aa58c;
+  background: #f0f2e9;
+}
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 33px;
+  height: 33px;
+  border-radius: 9px;
+  background: #e8eddf;
+  color: #8fa175;
+  font-size: 12px;
+  font-weight: 600;
+}
+.avatar.small {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 10px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #536d42;
+  color: #f4f7ed;
+}
+.brand small {
+  display: block;
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: #a0ad8f;
+  line-height: 1;
+  margin-top: 2px;
+}
+.boot-screen {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  color: #98ac80;
+  font-size: 12px;
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+.pulse {
+  animation: pulse 2s infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}

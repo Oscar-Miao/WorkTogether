@@ -1,0 +1,62 @@
+services:
+  database:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: team_agent
+      POSTGRES_USER: team_agent
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in local environment}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U team_agent -d team_agent']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/deploy/Dockerfile
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 3001
+      WEB_ORIGIN: https://${APP_DOMAIN:?Set APP_DOMAIN}
+      TEAM_AGENT_SERVER_DATA_DIR: /var/lib/team-agent
+      DATABASE_URL: postgres://team_agent:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@database:5432/team_agent
+      OWNER_EMAIL: ${OWNER_EMAIL:?Set OWNER_EMAIL}
+      OWNER_PASSWORD: ${OWNER_PASSWORD:?Set OWNER_PASSWORD}
+      TEAM_AGENT_MEMBER_LIMIT: ${TEAM_AGENT_MEMBER_LIMIT:-50}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      COORDINATOR_ENABLED: ${COORDINATOR_ENABLED:-false}
+      COORDINATOR_BASE_URL: ${COORDINATOR_BASE_URL:-https://api.deepseek.com}
+      COORDINATOR_MODEL: ${COORDINATOR_MODEL:-}
+      COORDINATOR_API_KEY: ${COORDINATOR_API_KEY:-}
+    volumes:
+      - api-data:/var/lib/team-agent
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+  proxy:
+    image: caddy:2
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ../proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  postgres-data:
+  api-data:
+  caddy-data:
+  caddy-config:

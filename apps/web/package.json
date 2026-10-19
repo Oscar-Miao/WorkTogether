@@ -1,0 +1,12 @@
+{
+  "name": "@team-agent/web",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@team-agent/contracts": "workspace:*",
+    "@team-agent/domain": "workspace:*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "lucide-react": "1.59.0"
+  }
+}

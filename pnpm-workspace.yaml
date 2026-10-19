@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+storeDir: .local/pnpm-store
+saveExact: true
+strictDepBuilds: true
+updateNotifier: false
+allowBuilds:
+  esbuild: true
+  '@nestjs/core': false
+  '@google/genai': false
+  protobufjs: false
+minimumReleaseAgeExclude:
+  - lucide-react@1.59.0

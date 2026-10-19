@@ -1,0 +1,13 @@
+{
+  "name": "@team-agent/agent-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@team-agent/contracts": "workspace:*",
+    "@team-agent/domain": "workspace:*",
+    "@earendil-works/pi-coding-agent": "1.3.0",
+    "@earendil-works/pi-ai": "1.3.0"
+  }
+}

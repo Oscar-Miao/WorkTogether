@@ -1,0 +1,91 @@
+/* 进阶能力仍使用唯一侧栏；表单跟随窄屏宽度换行。 */
+.c-space > div {
+  min-width: 0;
+  flex: 1;
+}
+.c-space strong,
+.c-space small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.c-advanced {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.c-advanced p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.c-advanced {
+  border-top: 1px solid #e5eaf5;
+  padding: 16px 0;
+  margin-top: 12px;
+}
+.c-advanced summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 0;
+  color: #28456b;
+}
+.c-advanced details {
+  margin: 10px 0;
+}
+.c-advanced form,
+.c-advanced fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  min-width: 0;
+}
+.c-advanced input:not([type='checkbox']),
+.c-advanced textarea,
+.c-advanced select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #dce4f3;
+  border-radius: 8px;
+  padding: 9px;
+  background: #fff;
+  color: #24364e;
+}
+.c-advanced textarea {
+  min-height: 75px;
+  resize: vertical;
+}
+.c-advanced .btn {
+  margin: 4px 4px 4px 0;
+}
+.c-advanced-choice {
+  display: block;
+  width: 100%;
+  border: 1px solid #dce4f3;
+  border-radius: 8px;
+  background: white;
+  color: #28456b;
+  padding: 10px;
+  margin: 6px 0;
+  text-align: left;
+  cursor: pointer;
+}
+.c-advanced-choice[aria-current] {
+  background: #eef3ff;
+  border-color: #7894ed;
+}
+.c-advanced-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  overflow-wrap: anywhere;
+}
+.c-advanced pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@team-agent/bridge",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@team-agent/contracts": "workspace:*",
+    "@team-agent/domain": "workspace:*",
+    "@team-agent/agent-runtime": "workspace:*",
+    "ws": "8.22.0",
+    "jose": "6.2.12"
+  }
+}
