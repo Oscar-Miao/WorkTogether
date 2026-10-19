@@ -506,14 +506,15 @@ describe('MVP authority and actual execution', () => {
     expect(receipts.length).toBeGreaterThan(0);
   });
 
-  it('revokes a removed member session immediately', async () => {
+  it('revokes a removed member project access immediately while preserving their account', async () => {
     const users = (await request('/api/v1/members', undefined, owner)).data;
     await request(
       '/api/v1/members/' + users.find((u: any) => u.role === 'MEMBER').id + '/remove',
       {},
       owner,
     );
-    await request('/api/v1/bootstrap', undefined, member, 401);
+    await request('/api/v1/bootstrap', undefined, member, 404);
+    expect((await request('/api/v1/me', undefined, member)).data.role).toBe('MEMBER');
   });
 
   it('protects the active local database and recovers Owner credentials through audited maintenance', async () => {

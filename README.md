@@ -21,11 +21,17 @@ pnpm run setup
 pnpm dev
 ```
 
-打开 http://127.0.0.1:5173 。首次初始化会生成本机密码，登录凭据位于 **.local/server/bootstrap-owner.json**，不要提交或发送该文件。重复执行 pnpm run setup 不重置已有维护者密码。OWNER_EMAIL / OWNER_PASSWORD 和数据库 OWNER 角色名保留初始化兼容，界面将该人类角色称为项目维护者。开发 API 位于 127.0.0.1:3001。
+打开 http://127.0.0.1:5173，选择“注册账号”，使用自己的邮箱注册后创建团队或接受团队邀请。进入聊天后点击“团队与项目”（桌面左栏、手机聊天头部），维护者可生成邀请并复制给同事。完整流程见 [账号与团队入驻](docs/architecture/team-onboarding.md)。
+
+初始化维护账号保留用于部署兼容，普通成员不需要它的密码。首次初始化会生成本机密码，登录凭据位于 **.local/server/bootstrap-owner.json**，不要提交或发送该文件。重复执行 pnpm run setup 不重置已有维护者密码。OWNER_EMAIL / OWNER_PASSWORD 和数据库 OWNER 角色名保留初始化兼容，界面将该人类角色称为项目维护者。开发 API 位于 127.0.0.1:3001。
 
 忘记 Owner 密码时，先停止 API，再以服务运行身份执行 pnpm reset:owner。新凭据写入数据根下 private/owner-recovery.json，所有旧 Owner 会话失效，并留下审计。命令不向终端输出密码；本地数据库锁会拒绝和 API 同时打开 PGlite。
 
 未配置 DATABASE_URL 时使用持久化 PGlite，数据保存在 .local/server/postgres。它适合本机开发；生产模式强制使用外部 PostgreSQL、HTTPS Web 地址及源码之外的绝对持久目录。
+
+内测密码最低 6 位，邮箱只校验格式；设置 NODE_ENV=production 后，新注册、邀请开户与改密自动恢复最低 12 位。登录页提供“修改密码”，需要输入当前密码；成功后原会话全部失效。查看本机数据可先停止 API，再运行 pnpm db:inspect，命令与 SQL 见 [PGlite 操作手册](docs/runbooks/pglite-inspection.md)。
+
+账号默认上限为 10（包含初始化维护账号），可通过 TEAM_AGENT_MEMBER_LIMIT 调整。TEAM_AGENT_REGISTRATION_ENABLED=false 可关闭自主注册。当前邀请使用复制链接分享，邮件验证码、自动发信与密码找回尚未接入。
 
 ## 进入进阶功能
 

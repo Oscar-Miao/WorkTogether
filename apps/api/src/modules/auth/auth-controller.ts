@@ -1,12 +1,42 @@
 import { Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { acceptInviteSchema, inviteSchema, loginSchema } from '@team-agent/contracts';
+import {
+  acceptInviteSchema,
+  inviteSchema,
+  loginSchema,
+  registerSchema,
+  changePasswordSchema,
+} from '@team-agent/contracts';
 import type { Services } from '../../container.js';
 import { SERVICES } from '../../common/tokens.js';
 import { originCheck } from '../../common/security.js';
 @Controller('api/v1')
 export class AuthController {
   constructor(@Inject(SERVICES) private readonly s: Services) {}
+  @Get('auth/options') options() {
+    return {
+      data: {
+        registration_enabled: this.s.config.registrationEnabled,
+        password_min_length: this.s.auth.passwordMinLength,
+      },
+    };
+  }
+  @Post('auth/register')
+  async register(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body: unknown,
+  ) {
+    return { data: await this.s.auth.register(req, res, registerSchema.parse(body)) };
+  }
+  @Post('auth/change-password')
+  async changePassword(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+    @Body() body: unknown,
+  ) {
+    return { data: await this.s.auth.changePassword(req, res, changePasswordSchema.parse(body)) };
+  }
   @Post('auth/login')
   async login(
     @Req() req: Request,

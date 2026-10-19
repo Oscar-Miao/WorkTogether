@@ -118,6 +118,11 @@ export class HistoryService {
       scope: 'audit:owner',
       from: 'audit_logs',
       columns: '*',
+      // 根审计兼存全站目录事件；项目维护者不得读取其他团队的身份和目录元信息。
+      where: `NOT EXISTS(SELECT 1 FROM org_workspaces) OR (
+        action NOT LIKE 'workspace.%' AND action NOT LIKE 'project.%' AND action NOT LIKE 'team.%'
+        AND (action NOT IN ('account.registered','session.login') OR actor_id IN(SELECT id FROM project_users))
+      ) OR (action LIKE 'team.invitation_%' AND detail->>'project_id'='project_default')`,
       sequence: 'id',
     });
   }

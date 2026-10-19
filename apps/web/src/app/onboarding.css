@@ -1,0 +1,188 @@
+/* 身份入口独立于项目聊天，表单在窄屏纵向排列，邀请链接允许换行。 */
+.team-onboarding {
+  min-height: 100dvh;
+  background: #f5f7fb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  gap: 20px;
+}
+.team-welcome {
+  width: min(100%, 540px);
+  padding: 36px;
+  background: #fff;
+  border: 1px solid #e3e8f2;
+  border-radius: 18px;
+  box-shadow: 0 12px 40px #23395c08;
+  overflow-wrap: anywhere;
+}
+.team-welcome h1 {
+  font-size: 26px;
+  margin: 14px 0;
+}
+.team-welcome p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.team-welcome.compact {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+.team-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid #e4e8f0;
+  padding-bottom: 9px;
+  margin: 22px 0;
+}
+.team-tabs button {
+  flex: 1;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  padding: 10px 8px;
+  color: #647087;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.team-tabs button[aria-pressed='true'] {
+  color: #365dd1;
+  background: #edf2ff;
+  font-weight: 600;
+}
+.team-welcome form,
+.team-invitations form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.team-invite-preview {
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #dce5fb;
+  background: #f7f9ff;
+  border-radius: 10px;
+}
+.team-invite-preview > span {
+  font-size: 12px;
+  color: #6f7d96;
+}
+.team-invite-preview h3 {
+  margin: 10px 0;
+}
+.team-invite-preview small,
+.team-share small {
+  display: block;
+  font-size: 11px;
+  color: #6c7990;
+  line-height: 1.7;
+}
+.team-projects {
+  display: grid;
+  gap: 10px;
+}
+.team-project {
+  display: grid;
+  text-align: left;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #e4e8ef;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+.team-project:hover {
+  border-color: #90a7e3;
+  background: #f8faff;
+}
+.team-project span {
+  font-size: 12px;
+  color: #71809a;
+}
+.team-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  color: #738099;
+  font-size: 12px;
+}
+.team-invitations {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #e5e9f0;
+}
+.team-invitations summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+.team-invitations p {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.team-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.team-share {
+  padding: 14px;
+  background: #f5f8ff;
+  margin-top: 16px;
+  border-radius: 9px;
+  display: grid;
+  gap: 10px;
+}
+.team-invitation-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+.team-invitation-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #e9edf5;
+  overflow-wrap: anywhere;
+}
+.team-invitation-list small {
+  color: #7b879b;
+  font-size: 11px;
+}
+.team-welcome input,
+.team-welcome textarea,
+.team-invitations input,
+.team-invitations textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+@media (max-width: 760px) {
+  .team-welcome {
+    padding: 24px 20px;
+  }
+  .login-panel {
+    padding: 32px 24px;
+  }
+  .login-story {
+    padding: 28px;
+  }
+  .login-copy h1 {
+    font-size: 30px;
+  }
+  .team-invitation-list > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

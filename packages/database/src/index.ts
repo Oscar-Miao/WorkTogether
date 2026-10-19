@@ -159,3 +159,5 @@ export async function createDatabase(options: {
     throw error;
   }
 }
+
+export { openInspectionDatabase } from './inspection.js';

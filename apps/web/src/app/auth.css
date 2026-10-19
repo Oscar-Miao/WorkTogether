@@ -107,3 +107,13 @@
 .login-hint svg {
   margin-top: 3px;
 }
+
+.login-notice {
+  padding: 12px;
+  border: 1px solid #dbe7d5;
+  border-radius: 8px;
+  color: #426536;
+  background: #f2f8ed;
+  font-size: 13px;
+  line-height: 1.7;
+}

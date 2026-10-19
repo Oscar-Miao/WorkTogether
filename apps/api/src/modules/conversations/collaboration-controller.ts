@@ -163,7 +163,7 @@ export class CollaborationController {
     owner(user);
     return {
       data: await this.s.db.query(
-        'SELECT id,email,name,role,active FROM users ORDER BY created_at',
+        'SELECT id,email,name,role,active FROM project_users ORDER BY created_at',
       ),
     };
   }
@@ -171,24 +171,8 @@ export class CollaborationController {
   async remove(@Req() req: Request, @Param('id') id: string) {
     const user = await this.s.auth.current(req, true);
     owner(user);
-    if (this.s.project?.id && this.s.project.id !== 'project_default') {
-      await this.s.organization!.removeMember(user, this.s.project.id, id);
-      return { data: { ok: true } };
-    }
-    await this.s.db.transaction(async (tx) => {
-      const rows = await tx.query(
-        "UPDATE users SET active=false WHERE id=$1 AND role='MEMBER' RETURNING id",
-        [id],
-      );
-      if (!rows.length) throw new DomainError('NOT_FOUND', '成员不存在', 404);
-      await tx.query('DELETE FROM sessions WHERE user_id=$1', [id]);
-      await tx.query(
-        "UPDATE tasks SET state='CANCELLED',approval=NULL,version=version+1 WHERE creator_id=$1 AND state IN ('DRAFT','PENDING_APPROVAL','QUEUED')",
-        [id],
-      );
-      await audit(tx, user.id, 'member.remove', id);
-    });
-    await this.s.organization?.revokeEverywhere(id);
+    // 团队维护者只能撤销本项目资格，不能注销他人的全站账号和其他团队会话。
+    await this.s.organization!.removeMember(user, this.s.project?.id || 'project_default', id);
     return { data: { ok: true } };
   }
   @Get('audit')

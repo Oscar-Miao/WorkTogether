@@ -20,7 +20,8 @@
     "build": "pnpm check && tsup --config tsup.config.ts && vite build --config apps/web/vite.config.ts",
     "start": "node apps/api/dist/main.js",
     "check:smoke": "node scripts/checks/build-smoke.mjs",
-    "reset:owner": "tsx scripts/dev/reset-owner.ts"
+    "reset:owner": "tsx scripts/dev/reset-owner.ts",
+    "db:inspect": "tsx scripts/database/inspect.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",

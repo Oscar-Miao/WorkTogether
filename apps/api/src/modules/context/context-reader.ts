@@ -19,7 +19,7 @@ export class ContextReader {
     if (!Number.isInteger(offset) || offset < 0)
       throw new DomainError('INVALID_OFFSET', '偏移量无效', 400);
     const rows = await this.db.query(
-      'SELECT a.descriptor,a.lease_until,t.state,u.active,d.revoked FROM execution_attempts a JOIN tasks t ON t.id=a.task_id JOIN users u ON u.id=t.creator_id JOIN devices d ON d.id=a.device_id WHERE a.id=$1 AND a.device_id=$2',
+      'SELECT a.descriptor,a.lease_until,t.state,u.active,d.revoked FROM execution_attempts a JOIN tasks t ON t.id=a.task_id JOIN project_users u ON u.id=t.creator_id JOIN devices d ON d.id=a.device_id WHERE a.id=$1 AND a.device_id=$2',
       [attemptId, claims.device_id],
     );
     const row = rows[0];

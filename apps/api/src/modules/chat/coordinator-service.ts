@@ -329,7 +329,7 @@ export class CoordinatorService {
   }
   private async process(job: Row) {
     const user = (
-      await this.db.query('SELECT id,email,name,role FROM users WHERE id=$1 AND active', [
+      await this.db.query('SELECT id,email,name,role FROM project_users WHERE id=$1 AND active', [
         job.actor_id,
       ])
     )[0] as User | undefined;

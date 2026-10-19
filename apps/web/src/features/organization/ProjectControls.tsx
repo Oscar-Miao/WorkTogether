@@ -177,7 +177,7 @@ export function ProjectManager() {
           {members.map((m) => (
             <div className="c-advanced-row" key={m.id}>
               {m.name} · {m.email}
-              {projectId() !== 'project_default' && m.role !== 'admin' && (
+              {m.role !== 'admin' && (
                 <button
                   onClick={() =>
                     void platform('/projects/' + projectId() + '/members/' + m.id + '/remove', {})

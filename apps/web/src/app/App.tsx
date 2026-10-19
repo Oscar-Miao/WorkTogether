@@ -13,6 +13,7 @@ import {
   Paperclip,
   ChevronRight,
   BookOpen,
+  Building2,
   Menu,
   ArrowDown,
 } from 'lucide-react';
@@ -22,6 +23,8 @@ import { api, setCsrf } from '../lib/api.js';
 import { chatApi } from '../lib/chat-api.js';
 import { Button, Field, Modal } from '../components/ui.js';
 import { LoginView } from '../features/auth/LoginView.js';
+import { AccountGate } from '../features/auth/AccountGate.js';
+import { TeamDialog } from '../features/organization/TeamDialog.js';
 import { useChatData } from '../features/chat/use-chat-data.js';
 import { ChatComposer } from '../features/chat/ChatComposer.js';
 import { GroupDialog } from '../features/chat/GroupDialog.js';
@@ -49,6 +52,13 @@ function MessageBody({ message }: { message: Message }) {
   return <p className="c-message-text">{nodes}</p>;
 }
 export function App() {
+  return (
+    <AccountGate>
+      <ChatApplication />
+    </AccountGate>
+  );
+}
+function ChatApplication() {
   const { data, feed, loading, groupId, select, refresh, reload, more, error, setError, logout } =
     useChatData();
   const [panel, setPanel] = useState<Panel>(() =>
@@ -57,6 +67,7 @@ export function App() {
     [mobileGroups, setMobileGroups] = useState(false),
     [search, setSearch] = useState(''),
     [groupsOpen, setGroupsOpen] = useState(false),
+    [teamOpen, setTeamOpen] = useState(false),
     [goalId, setGoalId] = useState(''),
     [goalForm, setGoalForm] = useState<{ goal: Goal; action: GoalAction } | null>(null),
     [mentionTarget, setMentionTarget] = useState<{ name: string; nonce: number } | null>(null),
@@ -220,6 +231,7 @@ export function App() {
             : '协作上下文';
   return (
     <div className="c-app">
+      {teamOpen && <TeamDialog onClose={() => setTeamOpen(false)} />}
       <div className="c-topline">
         <span>共域 / 团队协作</span>
         <span>
@@ -257,6 +269,13 @@ export function App() {
             <Target size={20} />
           </button>
           <div className="c-rail-bottom">
+            <button
+              aria-label="团队与项目"
+              title="创建团队、加入团队与邀请成员"
+              onClick={() => setTeamOpen(true)}
+            >
+              <Users size={20} />
+            </button>
             <button
               className={panel === 'node' ? 'active' : ''}
               aria-label="主设备状态"
@@ -394,6 +413,13 @@ export function App() {
               {device?.status === 'online' ? '主设备 在线' : '主设备 未就绪'}
             </button>
             <div className="c-head-tools">
+              <button
+                className="c-icon c-mobile-only"
+                aria-label="团队与项目"
+                onClick={() => setTeamOpen(true)}
+              >
+                <Building2 size={20} />
+              </button>
               <button
                 className={'c-icon ' + (panel === 'members' ? 'active' : '')}
                 aria-label="群成员"

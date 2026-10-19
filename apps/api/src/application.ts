@@ -11,6 +11,8 @@ import { SERVICES } from './common/tokens.js';
 import { ApiFilter } from './common/api-filter.js';
 import { ids } from './common/security.js';
 import { AuthController } from './modules/auth/auth-controller.js';
+import { AuthService } from './modules/auth/auth-service.js';
+import { AdmissionController } from './modules/organization/admission-controller.js';
 import { CollaborationController } from './modules/conversations/collaboration-controller.js';
 import { TaskController } from './modules/tasks/task-controller.js';
 import { DeviceController } from './modules/devices/device-controller.js';
@@ -31,11 +33,28 @@ export async function createApplication(overrides: Partial<ApiConfig> = {}) {
   services.oidc = new OidcService(services.db, services.auth, services.config);
   const organization = new OrganizationService(services);
   await organization.initialize();
+  // 根身份接口不要求团队资格；默认项目业务接口同样逐请求校验显式成员关系。
+  const defaultProjectAuth = new AuthService(
+    services.db,
+    services.config,
+    async (req, mutation) => {
+      const user = await services.auth.current(req, mutation);
+      const scope = await organization.membership(user, 'project_default');
+      return { ...user, role: scope.role === 'admin' ? 'OWNER' : 'MEMBER' };
+    },
+  );
+  // 只替换身份边界，不复制服务对象；动态策略和维护服务仍使用当前实例。
+  const defaultProjectServices = new Proxy(services, {
+    get(target, property) {
+      return property === 'auth' ? defaultProjectAuth : Reflect.get(target, property);
+    },
+  });
   const routed = scopedServices(services);
   @Module({
     controllers: [
       AuthController,
       OrganizationController,
+      AdmissionController,
       OidcController,
       AdvancedController,
       ChatController,
@@ -56,13 +75,41 @@ export async function createApplication(overrides: Partial<ApiConfig> = {}) {
   app.use(cookieParser());
   // 路径选择的是服务实例，权限仍由根身份和项目成员关系逐请求验证。
   app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.method === 'OPTIONS') {
+      next();
+      return;
+    }
     const match = /^\/p\/(prj_[a-zA-Z0-9]+)(\/(?:api\/v[12]|bridge\/v1)(?:\/.*)?)$/.exec(req.url);
     if (!req.url.startsWith('/p/')) {
-      next();
+      const identity =
+        /^\/api\/v1\/(auth(?:\/|$)|me(?:\?|$)|invitations\/accept(?:\?|$)|health(?:\?|$)|devices\/pair(?:\?|$))/.test(
+          req.url,
+        );
+      if (/^\/api\/v[12]\//.test(req.url) && !identity) {
+        try {
+          await organization.membership(await services.auth.current(req), 'project_default');
+          requestScope.run(defaultProjectServices, next);
+        } catch (error) {
+          const e = error as DomainError;
+          res.status(e.status || 500).json({
+            error: {
+              code: e.code || 'PROJECT_UNAVAILABLE',
+              message: e instanceof DomainError ? e.message : '项目暂不可用',
+            },
+          });
+        }
+      } else next();
       return;
     }
     if (!match) {
       res.status(404).json({ error: { code: 'PROJECT_UNAVAILABLE', message: '项目路径不可用' } });
+      return;
+    }
+    // 项目数据库只保存镜像身份；禁止在项目路径下另建账号或签发旧开户邀请。
+    if (/^\/api\/v1\/(auth|invitations)(?:\/|$)/.test(match[2])) {
+      res
+        .status(404)
+        .json({ error: { code: 'IDENTITY_ROOT_REQUIRED', message: '账号操作请使用统一登录入口' } });
       return;
     }
     try {

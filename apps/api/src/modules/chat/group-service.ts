@@ -12,7 +12,7 @@ export class GroupService {
   async list(user: User, discover = false, offset = 0, q = ''): Promise<Group[]> {
     const rows = await this.db.query(
       `SELECT c.*, coalesce((SELECT active FROM users WHERE id=coalesce(c.manager_id,c.created_by)),false) AS manager_active, (c.visibility='project' OR EXISTS(SELECT 1 FROM group_members m WHERE m.conversation_id=c.id AND m.user_id=$1)) AS joined,
-  (SELECT count(*)::int FROM users u WHERE u.active AND (c.visibility='project' OR EXISTS(SELECT 1 FROM group_members m WHERE m.conversation_id=c.id AND m.user_id=u.id))) AS member_count,
+  (SELECT count(*)::int FROM project_users u WHERE u.active AND (c.visibility='project' OR EXISTS(SELECT 1 FROM group_members m WHERE m.conversation_id=c.id AND m.user_id=u.id))) AS member_count,
   coalesce((SELECT left(body,80) FROM messages WHERE conversation_id=c.id ORDER BY seq DESC LIMIT 1),'') AS latest_message,
   greatest(0,coalesce((SELECT max(seq) FROM messages WHERE conversation_id=c.id),0)-coalesce((SELECT seq FROM group_read_watermarks WHERE conversation_id=c.id AND user_id=$1),0))::int AS unread_count,
   coalesce((SELECT max(seq) FROM messages WHERE conversation_id=c.id),0) AS latest_seq
@@ -25,7 +25,7 @@ export class GroupService {
   async members(user: User, id: string, tx: SqlConnection = this.db): Promise<GroupMember[]> {
     const g = await requireGroupAccess(tx, user, id);
     return tx.query(
-      "SELECT u.id,u.name,u.role FROM users u WHERE u.active AND ($2='project' OR EXISTS(SELECT 1 FROM group_members m WHERE m.conversation_id=$1 AND m.user_id=u.id)) ORDER BY u.created_at,u.id",
+      "SELECT u.id,u.name,u.role FROM project_users u WHERE u.active AND ($2='project' OR EXISTS(SELECT 1 FROM group_members m WHERE m.conversation_id=$1 AND m.user_id=u.id)) ORDER BY u.created_at,u.id",
       [id, g.visibility],
     ) as Promise<GroupMember[]>;
   }

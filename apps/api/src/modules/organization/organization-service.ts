@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { AdmissionService } from './admission-service.js';
 import { resolve } from 'node:path';
 import type { User, ProjectScope, SessionUser } from '@team-agent/contracts';
 import { DomainError } from '@team-agent/domain';
@@ -13,10 +14,16 @@ import { audit, ids } from '../../common/security.js';
 export class OrganizationService {
   private readonly opened = new Map<string, Promise<Services>>();
   private server?: Server;
-  constructor(readonly root: Services) {}
+  readonly admission: AdmissionService;
+  constructor(readonly root: Services) {
+    this.admission = new AdmissionService(this);
+  }
 
   async initialize() {
     await this.root.db.transaction(async (tx) => {
+      const settings = (
+        await tx.query('SELECT * FROM identity_settings WHERE id=true FOR UPDATE')
+      )[0];
       const owner = (
         await tx.query(
           "SELECT id FROM users WHERE role='OWNER' AND active ORDER BY created_at LIMIT 1",
@@ -30,12 +37,18 @@ export class OrganizationService {
         "INSERT INTO org_projects(id,workspace_id,name,created_by) VALUES('project_default','workspace_default','共域协作项目',$1) ON CONFLICT DO NOTHING",
         [owner.id],
       );
-      await tx.query(
-        "INSERT INTO org_workspace_members SELECT 'workspace_default',id,CASE role WHEN 'OWNER' THEN 'admin' ELSE 'member' END FROM users WHERE active ON CONFLICT DO NOTHING",
-      );
-      await tx.query(
-        "INSERT INTO org_project_members SELECT 'project_default',id,CASE role WHEN 'OWNER' THEN 'admin' ELSE 'member' END FROM users WHERE active ON CONFLICT DO NOTHING",
-      );
+      // 仅在升级旧数据库时回填历史成员，后续重启不改变新账号的团队资格。
+      if (!settings.legacy_membership_migrated) {
+        await tx.query(
+          "INSERT INTO org_workspace_members SELECT 'workspace_default',id,CASE role WHEN 'OWNER' THEN 'admin' ELSE 'member' END FROM users WHERE active ON CONFLICT DO NOTHING",
+        );
+        await tx.query(
+          "INSERT INTO org_project_members SELECT 'project_default',id,CASE role WHEN 'OWNER' THEN 'admin' ELSE 'member' END FROM users WHERE active ON CONFLICT DO NOTHING",
+        );
+        await tx.query(
+          'UPDATE identity_settings SET legacy_membership_migrated=true WHERE id=true',
+        );
+      }
     });
     this.root.project = {
       id: 'project_default',
@@ -48,9 +61,6 @@ export class OrganizationService {
   }
 
   async membership(user: User, projectId: string): Promise<ProjectScope> {
-    // 兼容旧项目的成员语义：有效根账号仍属于迁移后的默认项目。
-    if (projectId === 'project_default')
-      return { ...this.root.project!, role: user.role === 'OWNER' ? 'admin' : 'member' };
     const row = (
       await this.root.db.query(
         'SELECT p.id,p.name,p.workspace_id,w.name AS workspace,m.role FROM org_projects p JOIN org_workspaces w ON w.id=p.workspace_id JOIN org_project_members m ON m.project_id=p.id WHERE p.id=$1 AND m.user_id=$2',
@@ -62,12 +72,10 @@ export class OrganizationService {
   }
   async list(user: User) {
     const rows = await this.root.db.query(
-      "SELECT p.id,p.name,p.workspace_id,w.name AS workspace,coalesce(m.role,'member') AS role FROM org_projects p JOIN org_workspaces w ON w.id=p.workspace_id LEFT JOIN org_project_members m ON m.project_id=p.id AND m.user_id=$1 WHERE m.user_id IS NOT NULL OR p.id='project_default' ORDER BY w.created_at,p.created_at,p.id",
+      'SELECT p.id,p.name,p.workspace_id,w.name AS workspace,m.role FROM org_projects p JOIN org_workspaces w ON w.id=p.workspace_id JOIN org_project_members m ON m.project_id=p.id WHERE m.user_id=$1 ORDER BY w.created_at,p.created_at,p.id',
       [user.id],
     );
-    return rows.map((r) =>
-      r.id === 'project_default' ? { ...r, role: user.role === 'OWNER' ? 'admin' : 'member' } : r,
-    );
+    return rows;
   }
   async workspaces(user: User) {
     return this.root.db.query(
@@ -111,10 +119,6 @@ export class OrganizationService {
   async members(user: User, projectId: string) {
     if ((await this.membership(user, projectId)).role !== 'admin')
       throw new DomainError('FORBIDDEN', '需要项目维护者权限', 403);
-    if (projectId === 'project_default')
-      return this.root.db.query(
-        "SELECT id,email,name,CASE role WHEN 'OWNER' THEN 'admin' ELSE 'member' END AS role FROM users WHERE active ORDER BY created_at",
-      );
     return this.root.db.query(
       'SELECT u.id,u.email,u.name,m.role FROM org_project_members m JOIN users u ON u.id=m.user_id WHERE m.project_id=$1 AND u.active ORDER BY u.created_at',
       [projectId],
@@ -129,9 +133,22 @@ export class OrganizationService {
       ])
     )[0];
     if (!target)
-      throw new DomainError('ACCOUNT_REQUIRED', '请先通过团队邀请建立账号，再加入项目', 404);
+      throw new DomainError(
+        'ACCOUNT_REQUIRED',
+        '该邮箱尚未注册，请发送团队邀请链接，让成员注册后加入',
+        404,
+      );
     await this.root.db.transaction(async (tx) => {
       await tx.query('SELECT id FROM org_projects WHERE id=$1 FOR UPDATE', [projectId]);
+      if (
+        (
+          await tx.query(
+            'SELECT role FROM org_project_members WHERE project_id=$1 AND user_id=$2',
+            [projectId, user.id],
+          )
+        )[0]?.role !== 'admin'
+      )
+        throw new DomainError('FORBIDDEN', '需要项目维护者权限', 403);
       const previous = (
         await tx.query('SELECT role FROM org_project_members WHERE project_id=$1 AND user_id=$2', [
           projectId,
@@ -164,25 +181,52 @@ export class OrganizationService {
     return { ok: true };
   }
   async removeMember(user: User, projectId: string, targetId: string) {
-    if (projectId === 'project_default')
-      throw new DomainError('LEGACY_MEMBERSHIP', '默认项目请使用团队成员撤销入口', 409);
     const scope = await this.membership(user, projectId);
     if (scope.role !== 'admin' || user.id === targetId)
       throw new DomainError('FORBIDDEN', '不能撤销自己，需要项目维护者权限', 403);
     await this.root.db.transaction(async (tx) => {
+      await tx.query('SELECT id FROM org_projects WHERE id=$1 FOR UPDATE', [projectId]);
+      if (
+        (
+          await tx.query(
+            'SELECT role FROM org_project_members WHERE project_id=$1 AND user_id=$2',
+            [projectId, user.id],
+          )
+        )[0]?.role !== 'admin'
+      )
+        throw new DomainError('FORBIDDEN', '需要项目维护者权限', 403);
+      const target = (
+        await tx.query('SELECT role FROM org_project_members WHERE project_id=$1 AND user_id=$2', [
+          projectId,
+          targetId,
+        ])
+      )[0];
+      if (
+        target?.role === 'admin' &&
+        (
+          await tx.query(
+            "SELECT count(*)::int AS n FROM org_project_members WHERE project_id=$1 AND role='admin'",
+            [projectId],
+          )
+        )[0].n <= 1
+      )
+        throw new DomainError('LAST_ADMIN', '不能移除项目最后一位维护者', 409);
       await tx.query('DELETE FROM org_project_members WHERE project_id=$1 AND user_id=$2', [
         projectId,
         targetId,
       ]);
       await audit(tx, user.id, 'project.member_removed', projectId, { user_id: targetId });
     });
-    const existing = this.opened.get(projectId);
+    const existing =
+      projectId === 'project_default' ? Promise.resolve(this.root) : this.opened.get(projectId);
     if (!existing) return { ok: true };
     const service = await existing;
-    await service.db.query('UPDATE users SET active=false WHERE id=$1', [targetId]);
+    // 根 users 是全站身份；移出默认项目不得注销其在其他团队的账号。
+    if (projectId !== 'project_default')
+      await service.db.query('UPDATE users SET active=false WHERE id=$1', [targetId]);
     await service.db.query('DELETE FROM group_members WHERE user_id=$1', [targetId]);
     const tasks = await service.db.query(
-      "SELECT id FROM tasks WHERE creator_id=$1 AND state IN ('QUEUED','DISPATCHING','RUNNING')",
+      "SELECT id FROM tasks WHERE creator_id=$1 AND state IN ('DRAFT','PENDING_APPROVAL','QUEUED','DISPATCHING','RUNNING','CANCEL_REQUESTED','RECONCILING')",
       [targetId],
     );
     for (const task of tasks) await service.tasks.cancelForPolicy(task.id, '项目成员权限已撤销');
@@ -202,6 +246,21 @@ export class OrganizationService {
         [userId],
       );
       for (const task of tasks) await service.tasks.cancelForPolicy(task.id, '团队身份权限已撤销');
+      service.tasks.changes.emit('all');
+    }
+  }
+  async synchronizeMember(userId: string, projectId: string) {
+    if (projectId === 'project_default') return;
+    const member = (
+      await this.root.db.query(
+        'SELECT role FROM org_project_members WHERE project_id=$1 AND user_id=$2',
+        [projectId, userId],
+      )
+    )[0];
+    const opened = this.opened.get(projectId);
+    if (member && opened) {
+      const service = await opened;
+      await this.syncUser(service, userId, member.role);
       service.tasks.changes.emit('all');
     }
   }

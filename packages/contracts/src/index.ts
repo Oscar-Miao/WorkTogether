@@ -322,7 +322,7 @@ export const acceptInviteSchema = z
   .object({
     token: z.string().min(32).max(200),
     name: z.string().trim().min(1).max(60),
-    password: z.string().min(12).max(200),
+    password: z.string().min(6, '密码至少 6 位').max(200),
   })
   .strict();
 export const messageSchema = z
@@ -491,3 +491,5 @@ export const bridgeMessageSchema = z.discriminatedUnion('type', [
 ]);
 
 export { z };
+
+export * from './onboarding.js';

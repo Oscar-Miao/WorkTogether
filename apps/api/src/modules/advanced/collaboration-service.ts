@@ -117,7 +117,7 @@ export class AdvancedCollaboration {
         [fork, input.title || group.title + ' · 分叉', input.reason || '分叉讨论', user.id],
       );
       await tx.query(
-        "INSERT INTO group_members(conversation_id,user_id) SELECT $1,u.id FROM users u WHERE u.active AND ($3='project' OR EXISTS(SELECT 1 FROM group_members m WHERE m.conversation_id=$2 AND m.user_id=u.id))",
+        "INSERT INTO group_members(conversation_id,user_id) SELECT $1,u.id FROM project_users u WHERE u.active AND ($3='project' OR EXISTS(SELECT 1 FROM group_members m WHERE m.conversation_id=$2 AND m.user_id=u.id))",
         [fork, id, group.visibility],
       );
       const messages = await tx.query(

@@ -12,6 +12,7 @@ export interface ApiConfig {
   ownerEmail: string;
   ownerPassword?: string;
   retentionEnabled: boolean;
+  registrationEnabled: boolean;
 }
 export function readConfig(overrides: Partial<ApiConfig> = {}): ApiConfig {
   const projectRoot = resolve(process.cwd());
@@ -29,6 +30,7 @@ export function readConfig(overrides: Partial<ApiConfig> = {}): ApiConfig {
     ownerEmail: process.env.OWNER_EMAIL || 'owner@team.local',
     ownerPassword: process.env.OWNER_PASSWORD,
     retentionEnabled: process.env.TEAM_AGENT_RETENTION_ENABLED === 'true',
+    registrationEnabled: process.env.TEAM_AGENT_REGISTRATION_ENABLED !== 'false',
     ...overrides,
   };
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535)

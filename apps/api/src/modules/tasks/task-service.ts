@@ -358,7 +358,13 @@ export class TaskService {
   }
   /** 仅由服务端撤权、归档和修订调用；服务身份单独审计，不冒充人类维护者。 */
   async cancelForPolicy(id: string, reason: string): Promise<TaskState> {
-    return this.cancelRecorded({ id: 'service:policy', name: '系统策略' }, id, reason);
+    // 内部策略不携带浏览器的幂等键，使用独立请求键；任务行锁保护停止状态流转。
+    return this.cancelRecorded(
+      { id: 'service:policy', name: '系统策略' },
+      id,
+      reason,
+      ids('policy'),
+    );
   }
   private async cancelRecorded(
     user: Pick<User, 'id' | 'name'>,
@@ -420,7 +426,7 @@ export class TaskService {
       )[0];
       if (!device) return;
       const rows = await tx.query(
-        "SELECT t.* FROM tasks t JOIN conversations c ON c.id=t.conversation_id JOIN users u ON u.id=t.creator_id WHERE t.state='QUEUED' AND u.active AND c.archived_at IS NULL AND t.input->>'repository_binding_id'=ANY($1::text[]) AND NOT EXISTS(SELECT 1 FROM collaboration_goals g JOIN goal_relations r ON r.source_id=g.id AND r.kind='depends_on' JOIN collaboration_goals parent ON parent.id=r.target_id WHERE g.task_id=t.id AND parent.state<>'COMPLETED') ORDER BY t.created_at LIMIT 20 FOR UPDATE OF t SKIP LOCKED",
+        "SELECT t.* FROM tasks t JOIN conversations c ON c.id=t.conversation_id JOIN project_users u ON u.id=t.creator_id WHERE t.state='QUEUED' AND u.active AND c.archived_at IS NULL AND t.input->>'repository_binding_id'=ANY($1::text[]) AND NOT EXISTS(SELECT 1 FROM collaboration_goals g JOIN goal_relations r ON r.source_id=g.id AND r.kind='depends_on' JOIN collaboration_goals parent ON parent.id=r.target_id WHERE g.task_id=t.id AND parent.state<>'COMPLETED') ORDER BY t.created_at LIMIT 20 FOR UPDATE OF t SKIP LOCKED",
         [device.repositories.map((r: any) => r.id)],
       );
       if (!rows.length) return;
@@ -534,7 +540,7 @@ export class TaskService {
     lock = false,
   ): Promise<Row> {
     const rows = await tx.query(
-      'SELECT a.*,t.state AS task_state,t.approval AS task_approval,t.input AS task_input,t.creator_id,u.active AS creator_active FROM execution_attempts a JOIN tasks t ON t.id=a.task_id JOIN users u ON u.id=t.creator_id WHERE a.id=$1 AND a.device_id=$2' +
+      'SELECT a.*,t.state AS task_state,t.approval AS task_approval,t.input AS task_input,t.creator_id,(u.active AND EXISTS(SELECT 1 FROM project_users pu WHERE pu.id=u.id)) AS creator_active FROM execution_attempts a JOIN tasks t ON t.id=a.task_id JOIN users u ON u.id=t.creator_id WHERE a.id=$1 AND a.device_id=$2' +
         (lock ? ' FOR UPDATE OF a' : ''),
       [id, deviceId],
     );

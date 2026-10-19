@@ -27,8 +27,9 @@ export function useChatData() {
       setFeed(null);
       setGroupId('');
       setCsrf('');
+      window.dispatchEvent(new Event('team-agent:identity-change'));
       if (error.code === 'PROJECT_UNAVAILABLE')
-        setError('当前项目不可访问，请返回默认项目选择其他工作。');
+        setError('当前项目不可访问，请选择已加入的团队或接受新邀请。');
     } else {
       if (error instanceof ApiError && error.code === 'GROUP_UNAVAILABLE') setFeed(null);
       setError(error.message);
@@ -160,6 +161,7 @@ export function useChatData() {
     error,
     setError,
     logout: () => {
+      window.dispatchEvent(new Event('team-agent:identity-change'));
       generation.current++;
       user.current = '';
       selected.current = '';
